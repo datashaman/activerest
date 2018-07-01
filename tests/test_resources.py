@@ -5,7 +5,7 @@ from unittest import TestCase
 
 
 class Todo(Resource):
-    completed: False
+    completed = False
 
     class Meta:
         site = 'http://example.com/todos'
