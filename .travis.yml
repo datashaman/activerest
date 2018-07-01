@@ -1,10 +1,15 @@
 language: python
 cache:
   directories:
-    - $TRAVIS_BUILD_DIR/.eggs
+  - "$TRAVIS_BUILD_DIR/.eggs"
 python:
-  - "2.7"
-  - "3.6"
-  - "3.7-dev"
-install:
+- '2.7'
+- '3.6'
+- 3.7-dev
+install: 
 script: make test
+deploy:
+  provider: pypi
+  user: datashaman
+  password:
+    secure: t+IJtHfVk1RbOjLczsWyPGYkX9oCxPSlnfQyBI91ZJ91Za9AP8HdmkGp9B72rYB57xOfnW2pf/PBmf148kWOJiRCm8b0YTimZkzdg7rqf2WfLixZpzIW7fK0DcJ3XeNzT4kyOM4SdrG3HgvV+45OaygpNECO9FuteCj0BDpGrm3CODzDG1CPTKdS7i79Y/NnNUB1I6JBwHtCTt5L+1ho9zFQy61i3nyYVAUcqoguW+vbYGNzI/HJgvtZl4+C4B+ED2iFbxY7Ho/y5CsGziEY0Bvry58U5NnAjZMRrJLSyG6rGyGTqgG65GLLWWfKK7xjxLhxbnA0I8+AqpnGcuyKx7DReTur5+79m2h8srhB8EQwWlNC98jsJzrfjZvMcVHII/yy+1/GNRsYeh4QDMouQpB23w0C/VVJtQ6cW6AIwfRfvaGlMP3PrWJ1ZlKp97VF/1bZz93n5eumNRU3CvocSwHvlvYpo301JEGkevGaBFhqqjYWc69jyFXISR9Kx/a9ZiEThql1QlzU5iarpEse934KuL9XSiiaXUjANL6xB98B3jaC2OZHQGEoOzZB7A9KzBBT9kaMlG6nUiecplVP5zMVqjbtVV13lO0h0D+7B1MuEIBLd3b1onAOc5a7PUFbUOHelBcXHC4pI2uhBCebRmaPmhT1YH5YVAy06QsirIE=
