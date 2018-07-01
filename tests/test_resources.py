@@ -14,7 +14,7 @@ class Todo(Resource):
 @requests_mock.Mocker()
 class TestResources(TestCase):
     def assert_todo_list(self, expected, actual):
-        self.assertEqual(list, type(actual))
+        self.assertIsInstance(actual, list)
         self.assertEqual(len(expected), len(actual))
 
         for index, expected_todo in enumerate(expected):
