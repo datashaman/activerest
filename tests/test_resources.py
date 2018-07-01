@@ -21,15 +21,11 @@ class TestResources(TestCase):
             actual_todo = actual[index]
 
             self.assertIsInstance(actual_todo, Todo)
-
-            for k, v in expected_todo.items():
-                self.assertEqual(v, getattr(actual_todo, k))
+            self.assertEqual(expected_todo, actual_todo.attributes)
 
     def assert_todo(self, expected, actual):
         self.assertIsInstance(actual, Todo)
-
-        for k, v in expected.items():
-            self.assertEqual(v, getattr(actual, k))
+        self.assertEqual(expected, actual.attributes)
 
     def test_find_all(self, m):
         expected = [
@@ -137,3 +133,18 @@ class TestResources(TestCase):
 
         todo = Todo.find(1)
         self.assertTrue(todo.destroy())
+
+    def test_create(self, m):
+        expected = {'id': 1, 'title': 'new todo', 'completed': False}
+
+        m.register_uri(
+            'POST',
+            'http://example.com/todos',
+            json=expected,
+            status_code=201
+        )
+
+        todo = Todo(title='new todo')
+        todo.save()
+
+        self.assertTrue(todo.is_persisted())

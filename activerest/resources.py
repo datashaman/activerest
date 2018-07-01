@@ -24,11 +24,12 @@ class Resource(object):
         self._meta.update(meta_defaults)
         self._meta.update(_meta)
 
-    def __getattr__(self, attr):
-        return getattr(self.attributes, attr)
-
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, str(' '.join('%s=%s' % (k, repr(v)) for k, v in self.__dict__.items() if k[0] != '_')))
+
+    @property
+    def attributes(self):
+        return dict((k, v) for k, v in self.__dict__.items() if k[0] != '_')
 
     def is_new(self):
         return not self._meta['persisted']
@@ -44,9 +45,7 @@ class Resource(object):
             url = '%s/%s' % (self.__class__.Meta.site, self.id)
             method = 'PUT'
 
-        data = dict((k, v) for k, v in self.__dict__.items() if k[0] != '_')
-        data = self._transform_params(data)
-
+        data = self._transform_params(self.attributes)
         response = requests.request(method, url, data=data)
 
         if (
