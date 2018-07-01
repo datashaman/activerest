@@ -1,1 +1,1 @@
-from activerest.resource import Resource
+from activerest.resources import Resource

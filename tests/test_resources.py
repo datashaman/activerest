@@ -14,24 +14,24 @@ class Todo(Resource):
 @requests_mock.Mocker()
 class TestResources(TestCase):
     def assert_todo_list(self, expected, actual):
-        assert list == type(actual)
-        assert len(expected) == len(actual)
+        self.assertEqual(list, type(actual))
+        self.assertEqual(len(expected), len(actual))
 
         for index, expected_todo in enumerate(expected):
             actual_todo = actual[index]
 
-            assert type(actual_todo) == Todo
+            self.assertIsInstance(actual_todo, Todo)
 
             for k, v in expected_todo.items():
-                assert v == getattr(actual_todo, k)
+                self.assertEqual(v, getattr(actual_todo, k))
 
     def assert_todo(self, expected, actual):
-        assert type(actual) == Todo
+        self.assertIsInstance(actual, Todo)
 
         for k, v in expected.items():
-            assert v == getattr(actual, k)
+            self.assertEqual(v, getattr(actual, k))
 
-    def test_all(self, m):
+    def test_find_all(self, m):
         expected = [
             {'id': 1, 'title': 'still todo', 'completed': False},
             {'id': 2, 'title': 'done', 'completed': True},
@@ -74,3 +74,66 @@ class TestResources(TestCase):
 
         actual = Todo.find(params={'title': 'still todo'})
         self.assert_todo_list(expected, actual)
+
+    def test_all(self, m):
+        expected = [
+            {'id': 1, 'title': 'still todo', 'completed': False},
+            {'id': 2, 'title': 'done', 'completed': True},
+        ]
+
+        m.register_uri(
+            'GET',
+            'http://example.com/todos',
+            json=expected,
+            status_code=200
+        )
+
+        actual = Todo.all()
+
+        self.assert_todo_list(expected, actual)
+
+    def test_delete(self, m):
+        m.register_uri(
+            'DELETE',
+            'http://example.com/todos/1',
+            status_code=200
+        )
+
+        self.assertTrue(Todo.delete(1))
+
+    def test_does_exist(self, m):
+        m.register_uri(
+            'HEAD',
+            'http://example.com/todos/1',
+            status_code=200
+        )
+
+        self.assertTrue(Todo.exists(1))
+
+    def test_does_not_exist(self, m):
+        m.register_uri(
+            'HEAD',
+            'http://example.com/todos/1',
+            status_code=404
+        )
+
+        self.assertFalse(Todo.exists(1))
+
+    def test_destroy(self, m):
+        expected = {'id': 1, 'title': 'still todo', 'completed': False}
+
+        m.register_uri(
+            'GET',
+            'http://example.com/todos/1',
+            json=expected,
+            status_code=200
+        )
+
+        m.register_uri(
+            'DELETE',
+            'http://example.com/todos/1',
+            status_code=200
+        )
+
+        todo = Todo.find(1)
+        self.assertTrue(todo.destroy())

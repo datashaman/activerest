@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 
 
 class Resource(object):
-    def __init__(self, meta=None, **attributes):
+    def __init__(self, _meta=None, **attributes):
         instance_defaults = dict((k, v) for k, v in self.__class__.__dict__.items() if k != 'Meta' and k[0] != '_')
 
         self.__dict__.update(instance_defaults)
@@ -18,11 +18,14 @@ class Resource(object):
             'persisted': False,
         }
 
-        if meta is None:
-            meta = {}
+        if _meta is None:
+            _meta = {}
         self._meta = {}
         self._meta.update(meta_defaults)
-        self._meta.update(meta)
+        self._meta.update(_meta)
+
+    def __getattr__(self, attr):
+        return getattr(self.attributes, attr)
 
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, str(' '.join('%s=%s' % (k, repr(v)) for k, v in self.__dict__.items() if k[0] != '_')))
@@ -85,11 +88,11 @@ class Resource(object):
 
         if id:
             if result:
-                return cls(meta={'persisted': True}, **result)
+                return cls(_meta={'persisted': True}, **result)
             return None
 
         if result:
-            return [cls(meta={'persisted': True}, **row) for row in result]
+            return [cls(_meta={'persisted': True}, **row) for row in result]
 
         return []
 

@@ -1,11 +1,8 @@
 from setuptools import setup
-import sys
-
-version = '0.0.1'
 
 setup(name='activerest',
-      version=version,
-      description='Basic ActiveResource for Python',
+      version='0.0.1',
+      description='Python REST resource client, modeled on Ruby on Rails\' ActiveResource.',
       author='Marlin Forbes',
       author_email='marlinf@datashaman.com',
       url='https://github.com/datashaman/activerest/',
