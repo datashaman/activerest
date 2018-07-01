@@ -14,6 +14,7 @@ setup(
         'six',
     ],
     tests_require=[
+        'coverage',
         'requests-mock',
     ],
     test_suite='tests',
