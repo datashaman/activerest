@@ -39,7 +39,7 @@ class Resource(object):
 
     def save(self):
         if self.is_new():
-            url = self.Meta.site
+            url = self.__class__.Meta.site
             method = 'POST'
         else:
             url = '%s/%s' % (self.__class__.Meta.site, self.id)

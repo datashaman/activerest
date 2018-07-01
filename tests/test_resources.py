@@ -19,7 +19,6 @@ class TestResources(TestCase):
 
         for index, expected_todo in enumerate(expected):
             actual_todo = actual[index]
-
             self.assertIsInstance(actual_todo, Todo)
             self.assertEqual(expected_todo, actual_todo.attributes)
 
@@ -135,7 +134,9 @@ class TestResources(TestCase):
         self.assertTrue(todo.destroy())
 
     def test_create(self, m):
-        expected = {'id': 1, 'title': 'new todo', 'completed': False}
+        attributes = {'title': 'new todo'}
+        expected = {'id': 1, 'completed': False}
+        expected.update(attributes)
 
         m.register_uri(
             'POST',
@@ -144,7 +145,36 @@ class TestResources(TestCase):
             status_code=201
         )
 
-        todo = Todo(title='new todo')
+        todo = Todo(**attributes)
         todo.save()
 
         self.assertTrue(todo.is_persisted())
+        self.assert_todo(expected, todo)
+
+    def test_update(self, m):
+        expected = {'id': 1, 'title': 'new todo', 'completed': False}
+        changes = {'title': 'amended todo', 'completed': True}
+        amended = {'id': 1}
+        amended.update(changes)
+
+        m.register_uri(
+            'GET',
+            'http://example.com/todos/1',
+            json=expected,
+            status_code=200
+        )
+
+        m.register_uri(
+            'PUT',
+            'http://example.com/todos/1',
+            json=amended,
+            status_code=200
+        )
+
+        todo = Todo.find(1)
+        for k, v in changes.items():
+            setattr(todo, k, v)
+        todo.save()
+
+        self.assertTrue(todo.is_persisted())
+        self.assert_todo(amended, todo)
