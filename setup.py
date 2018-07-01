@@ -10,6 +10,7 @@ setup(name='activerest',
       license='MIT License',
       install_requires=[
           'requests',
+          'six',
       ],
       tests_require=[
           'requests-mock',

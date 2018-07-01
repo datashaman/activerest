@@ -2,7 +2,7 @@ import logging
 import requests
 
 from collections import namedtuple
-from urllib.parse import urlencode
+from six.moves.urllib.parse import urlencode
 
 log = logging.getLogger(__name__)
 
