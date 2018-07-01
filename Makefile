@@ -1,5 +1,5 @@
 test:
-	python setup.py test
+	python setup.py -q test
 
 clean:
 	rm -rf activerest/__pycache__/
