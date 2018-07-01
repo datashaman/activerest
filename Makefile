@@ -1,5 +1,5 @@
 test:
-	python setup.py -q test
+	python setup.py test
 
 coverage:
 	coverage run --source activerest setup.py -q test
