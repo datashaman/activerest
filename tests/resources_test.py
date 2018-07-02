@@ -10,6 +10,13 @@ class Todo(Resource):
     class Meta:
         site = 'http://example.com'
 
+class TodoWithElementName(Resource):
+    completed = False
+
+    class Meta:
+        site = 'http://example.com'
+        element_name = 'todo'
+
 
 @requests_mock.Mocker()
 class ResourcesTest(TestCase):
@@ -178,3 +185,16 @@ class ResourcesTest(TestCase):
 
         self.assertTrue(todo.is_persisted())
         self.assert_todo(amended, todo)
+
+    def test_element_name(self, m):
+        expected = {'id': 1, 'title': 'new todo', 'completed': False}
+
+        m.register_uri(
+            'GET',
+            'http://example.com/todo/1',
+            json=expected,
+            status_code=200
+        )
+
+        actual = TodoWithElementName.find(1)
+        self.assertEqual(expected, actual.attributes)

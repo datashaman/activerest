@@ -124,8 +124,12 @@ class Resource(object):
 
     @classmethod
     def _url(cls, path=None):
-        collection = inflection.dasherize(inflection.underscore(inflection.pluralize(cls.__name__)))
-        url = '%s/%s' % (cls.Meta.site, collection)
+        if hasattr(cls.Meta, 'element_name'):
+            element_name = cls.Meta.element_name
+        else:
+            element_name = inflection.dasherize(inflection.underscore(inflection.pluralize(cls.__name__)))
+
+        url = '%s/%s' % (cls.Meta.site, element_name)
 
         if path:
             url = '%s/%s' % (url, path)
