@@ -1,3 +1,4 @@
+import inflection
 import logging
 import requests
 
@@ -38,11 +39,12 @@ class Resource(object):
         return self._meta['persisted']
 
     def save(self):
+        url = self.__class__._url()
+
         if self.is_new():
-            url = self.__class__.Meta.site
             method = 'POST'
         else:
-            url = '%s/%s' % (self.__class__.Meta.site, self.id)
+            url = '%s/%s' % (url, self.id)
             method = 'PUT'
 
         data = self._transform_params(self.attributes)
@@ -71,13 +73,13 @@ class Resource(object):
 
     @classmethod
     def delete(cls, id):
-        url = '%s/%s' % (cls.Meta.site, id)
+        url = cls._url(id)
         response = requests.delete(url)
         return response.status_code == 200
 
     @classmethod
     def exists(cls, id):
-        url = '%s/%s' % (cls.Meta.site, id)
+        url = cls._url(id)
         response = requests.head(url)
         return response.status_code == 200
 
@@ -97,14 +99,14 @@ class Resource(object):
 
     @classmethod
     def _json(cls, id=None, params=None):
+        url = cls._url()
+
         if id:
-            url = '%s/%s' % (cls.Meta.site, id)
+            url = '%s/%s' % (url, id)
         else:
             if params:
                 params = cls._transform_params(params)
-                url = '%s?%s' % (cls.Meta.site, urlencode(params))
-            else:
-                url = cls.Meta.site
+                url = '%s?%s' % (url, urlencode(params))
 
         return requests.get(url).json()
 
@@ -119,3 +121,13 @@ class Resource(object):
             transformed[key] = value
 
         return transformed
+
+    @classmethod
+    def _url(cls, path=None):
+        collection = inflection.dasherize(inflection.underscore(inflection.pluralize(cls.__name__)))
+        url = '%s/%s' % (cls.Meta.site, collection)
+
+        if path:
+            url = '%s/%s' % (url, path)
+
+        return url

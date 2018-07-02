@@ -8,7 +8,7 @@ class Todo(Resource):
     completed = False
 
     class Meta:
-        site = 'http://example.com/todos'
+        site = 'http://example.com'
 
 
 @requests_mock.Mocker()

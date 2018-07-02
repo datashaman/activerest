@@ -10,6 +10,7 @@ setup(
     packages=['activerest'],
     license='MIT License',
     install_requires=[
+        'inflection',
         'requests',
         'six',
     ],

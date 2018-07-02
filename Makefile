@@ -8,3 +8,6 @@ coverage:
 clean:
 	rm -rf activerest/__pycache__/
 	find . -name '*.pyc' -delete
+
+develop:
+	python setup.py -q develop
