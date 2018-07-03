@@ -1,9 +1,15 @@
+from os.path import join, dirname
 from setuptools import setup
+
+
+with open(join(dirname(__file__), 'README.rst')) as file:
+    long_description = file.read()
 
 setup(
     name='activerest',
     version='0.0.3',
     description='Python REST resource client, modeled on Ruby on Rails\' ActiveResource.',
+    long_description=long_description,
     author='Marlin Forbes',
     author_email='marlinf@datashaman.com',
     url='https://github.com/datashaman/activerest/',
