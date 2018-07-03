@@ -123,17 +123,27 @@ class Resource(object):
         return transformed
 
     @classmethod
-    def _url(cls, path=None):
-        if hasattr(cls.Meta, 'element_name'):
-            element_name = cls.Meta.element_name
+    def collection_name(cls):
+        if hasattr(cls.Meta, 'collection_name'):
+            return cls.Meta.collection_name
         else:
-            element_name = inflection.dasherize(inflection.underscore(inflection.pluralize(cls.__name__)))
+            return inflection.dasherize(inflection.underscore(inflection.pluralize(cls.__name__)))
 
-        url = '%s/%s' % (cls.Meta.site, element_name)
+    @classmethod
+    def query_string(cls, query_options=None):
+        if query_options:
+            return urlencode(query_options)
+        return ''
 
+    @classmethod
+    def element_path(cls, id, **kwargs):
+        return '/%s/%s%s' % (cls.collection_name(), id, cls.query_string(kwargs))
+
+    @classmethod
+    def _url(cls, path=None):
+        url = '%s/%s' % (cls.Meta.site, cls.collection_name())
         if path:
             url = '%s/%s' % (url, path)
-
         return url
 
     @classmethod
@@ -145,5 +155,7 @@ class Resource(object):
                 auth_class = requests.auth.HTTPDigestAuth
 
             kwargs['auth'] = auth_class(cls.Meta.user, cls.Meta.password)
+        if hasattr(cls.Meta, 'timeout'):
+            kwargs['timeout'] = cls.Meta.timeout
         response = requests.request(method, url, **kwargs)
         return response

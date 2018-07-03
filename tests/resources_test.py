@@ -13,12 +13,12 @@ class Todo(Resource):
         site = 'http://example.com'
 
 
-class TodoWithElementName(Resource):
+class TodoWithCollectionName(Resource):
     completed = False
 
     class Meta:
         site = 'http://example.com'
-        element_name = 'todo'
+        collection_name = 'todo'
 
 
 class TodoWithBasicAuth(Resource):
@@ -26,7 +26,7 @@ class TodoWithBasicAuth(Resource):
 
     class Meta:
         site = 'http://example.com'
-        element_name = 'todos'
+        collection_name = 'todos'
         auth_type = 'basic'
         user = 'user'
         password = 'password'
@@ -200,7 +200,7 @@ class ResourcesTest(TestCase):
         self.assertTrue(todo.is_persisted())
         self.assert_todo(amended, todo)
 
-    def test_element_name(self, m):
+    def test_collection_name(self, m):
         expected = {'id': 1, 'title': 'new todo', 'completed': False}
 
         m.register_uri(
@@ -210,7 +210,7 @@ class ResourcesTest(TestCase):
             status_code=200
         )
 
-        actual = TodoWithElementName.find(1)
+        actual = TodoWithCollectionName.find(1)
         self.assertEqual(expected, actual.attributes)
 
     def test_basic_auth(self, m):
