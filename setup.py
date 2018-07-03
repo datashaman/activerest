@@ -7,7 +7,7 @@ with open(join(dirname(__file__), 'README.rst')) as file:
 
 setup(
     name='activerest',
-    version='0.0.3',
+    version='0.0.4',
     description='Python REST resource client, modeled on Ruby on Rails\' ActiveResource.',
     long_description=long_description,
     author='Marlin Forbes',
