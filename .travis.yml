@@ -6,9 +6,7 @@ python:
 - '2.7'
 - '3.6'
 install: 
-script: make coverage
-after_success:
-  - coveralls
+script: make test
 deploy:
   provider: pypi
   distributions: "bdist_wheel"
