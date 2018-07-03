@@ -32,18 +32,34 @@ class Resource(object):
     def attributes(self):
         return dict((k, v) for k, v in self.__dict__.items() if k[0] != '_')
 
+    def primary_key(self):
+        return self.__dict__[self.__class__.pk()]
+
     def is_new(self):
         return not self._meta['persisted']
 
     def is_persisted(self):
         return self._meta['persisted']
 
+    def load(self, attributes):
+        for k, v in attributes.items():
+            if k[0] != '_':
+                setattr(self, k, v)
+
+    def update_attribute(self, name, value):
+        setattr(self, name, value)
+        return self.save()
+
+    def update_attributes(self, attributes):
+        self.load(attributes)
+        return self.save()
+
     def save(self):
         if self.is_new():
             path = self.__class__.collection_path()
             method = 'POST'
         else:
-            path = self.__class__.element_path(self.id)
+            path = self.__class__.element_path(self.primary_key())
             method = 'PUT'
 
         data = self._transform_params(self.attributes)
@@ -54,17 +70,21 @@ class Resource(object):
             or method == 'PUT' and response.status_code == 200
         ):
             self._meta['persisted'] = True
-            self.__dict__.update(response.json())
+            self.load(response.json())
             return True
 
         return False
 
     def destroy(self):
-        if self.is_persisted() and self.__class__.delete(self.id):
+        if self.is_persisted() and self.__class__.delete(self.primary_key()):
             self._meta['persisted'] = False
             return True
 
         return False
+
+    @classmethod
+    def pk(cls):
+        return getattr(cls.Meta, 'primary_key', 'id')
 
     @classmethod
     def all(cls):
