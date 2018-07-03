@@ -1,5 +1,8 @@
 # activerest
 
+[![Build Status](https://travis-ci.org/datashaman/activerest.svg?branch=master)](https://travis-ci.org/datashaman/activerest)
+[![Coverage Status](https://coveralls.io/repos/github/datashaman/activerest/badge.svg)](https://coveralls.io/github/datashaman/activerest)
+
 Python REST resource client, modeled on Ruby on Rails' ActiveResource.
 
 ## Installation

@@ -16,6 +16,8 @@ setup(
     ],
     tests_require=[
         'coverage',
+        'coveralls',
+        'pyyaml',
         'requests-mock',
     ],
     test_suite='tests',
