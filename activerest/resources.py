@@ -39,16 +39,15 @@ class Resource(object):
         return self._meta['persisted']
 
     def save(self):
-        url = self.__class__._url()
-
         if self.is_new():
+            path = self.__class__.collection_path()
             method = 'POST'
         else:
-            url = '%s/%s' % (url, self.id)
+            path = self.__class__.element_path(self.id)
             method = 'PUT'
 
         data = self._transform_params(self.attributes)
-        response = self.__class__._request(method, url, data=data)
+        response = self.__class__._request(method, path, data=data)
 
         if (
             method == 'POST' and response.status_code == 201
@@ -73,19 +72,26 @@ class Resource(object):
 
     @classmethod
     def delete(cls, id):
-        url = cls._url(id)
-        response = cls._request('DELETE', url)
+        path = cls.element_path(id)
+        response = cls._request('DELETE', path)
         return response.status_code == 200
 
     @classmethod
     def exists(cls, id):
-        url = cls._url(id)
-        response = cls._request('HEAD', url)
+        path = cls.element_path(id)
+        response = cls._request('HEAD', path)
         return response.status_code == 200
 
     @classmethod
-    def find(cls, id=None, params=None):
-        result = cls._json(id, params)
+    def find(cls, id=None, params=None, **query_options):
+        if id:
+            path = cls.element_path(id)
+        else:
+            if params is None:
+                params = {}
+            path = cls.collection_path(**params)
+
+        result = cls._request('GET', path).json()
 
         if id:
             if result:
@@ -96,19 +102,6 @@ class Resource(object):
             return [cls(_meta={'persisted': True}, **row) for row in result]
 
         return []
-
-    @classmethod
-    def _json(cls, id=None, params=None):
-        url = cls._url()
-
-        if id:
-            url = '%s/%s' % (url, id)
-        else:
-            if params:
-                params = cls._transform_params(params)
-                url = '%s?%s' % (url, urlencode(params))
-
-        return cls._request('GET', url).json()
 
     @classmethod
     def _transform_params(cls, params):
@@ -132,22 +125,20 @@ class Resource(object):
     @classmethod
     def query_string(cls, query_options=None):
         if query_options:
-            return urlencode(query_options)
+            query_options = cls._transform_params(query_options)
+            return '?%s' % urlencode(query_options)
         return ''
 
     @classmethod
-    def element_path(cls, id, **kwargs):
-        return '/%s/%s%s' % (cls.collection_name(), id, cls.query_string(kwargs))
+    def collection_path(cls, **query_options):
+        return '/%s%s' % (cls.collection_name(), cls.query_string(query_options))
 
     @classmethod
-    def _url(cls, path=None):
-        url = '%s/%s' % (cls.Meta.site, cls.collection_name())
-        if path:
-            url = '%s/%s' % (url, path)
-        return url
+    def element_path(cls, id, **query_options):
+        return '/%s/%s%s' % (cls.collection_name(), id, cls.query_string(query_options))
 
     @classmethod
-    def _request(cls, method, url, **kwargs):
+    def _request(cls, method, path, **kwargs):
         if hasattr(cls.Meta, 'auth_type'):
             if cls.Meta.auth_type == 'basic':
                 auth_class = requests.auth.HTTPBasicAuth
@@ -157,5 +148,6 @@ class Resource(object):
             kwargs['auth'] = auth_class(cls.Meta.user, cls.Meta.password)
         if hasattr(cls.Meta, 'timeout'):
             kwargs['timeout'] = cls.Meta.timeout
+        url = '%s%s' % (cls.Meta.site, path)
         response = requests.request(method, url, **kwargs)
         return response
