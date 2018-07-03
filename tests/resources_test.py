@@ -31,6 +31,24 @@ class TodoWithBasicAuth(Resource):
         user = 'user'
         password = 'password'
 
+class TodoWithDigestAuth(Resource):
+    completed = False
+
+    class Meta:
+        site = 'http://example.com'
+        collection_name = 'todos'
+        auth_type = 'digest'
+        user = 'user'
+        password = 'password'
+
+class TodoWithTimeout(Resource):
+    completed = False
+
+    class Meta:
+        site = 'http://example.com'
+        collection_name = 'todos'
+        timeout = 60
+
 
 @requests_mock.Mocker()
 class ResourcesTest(TestCase):
@@ -232,4 +250,92 @@ class ResourcesTest(TestCase):
         self.assertEqual(expected, actual.attributes)
 
     def test_digest_auth(self, m):
-        """Impossible to create an authorization header without a real request."""
+        expected = {'id': 1, 'title': 'new todo', 'completed': False}
+
+        m.register_uri(
+            'GET',
+            'http://example.com/todos/1',
+            json=expected,
+            status_code=200
+        )
+
+        actual = TodoWithDigestAuth.find(1)
+        self.assertEqual(expected, actual.attributes)
+
+    def test_repr(self, m):
+        expected = "Todo(completed=False id=1 title='new todo')"
+        todo = Todo(id=1, title='new todo', completed=False)
+        self.assertEqual(expected, str(todo))
+
+    def test_update_attribute(self, m):
+        expected = {'id': 1, 'title': 'new todo', 'completed': False}
+        updated = {'id': 1, 'title': 'new title', 'completed': False}
+
+        m.register_uri(
+            'GET',
+            'http://example.com/todos/1',
+            json=expected,
+            status_code=200
+        )
+
+        m.register_uri(
+            'PUT',
+            'http://example.com/todos/1',
+            json=updated,
+            status_code=200
+        )
+
+        actual = Todo.find(1)
+        actual.update_attribute('title', 'new title')
+        self.assertEqual(updated, actual.attributes)
+
+    def test_update_attributes(self, m):
+        expected = {'id': 1, 'title': 'new todo', 'completed': False}
+        updates = {
+            'title': 'new title',
+            'completed': True,
+        }
+        updated = {'id': 1}
+        updated.update(updates)
+
+        m.register_uri(
+            'GET',
+            'http://example.com/todos/1',
+            json=expected,
+            status_code=200
+        )
+
+        m.register_uri(
+            'PUT',
+            'http://example.com/todos/1',
+            json=updated,
+            status_code=200
+        )
+
+        actual = Todo.find(1)
+        actual.update_attributes(updates)
+        self.assertEqual(updated, actual.attributes)
+
+    def test_destroy_new(self, m):
+        todo = Todo(title='new todo')
+        self.assertFalse(todo.destroy())
+
+    def test_find_by_params_with_no_results(self, m):
+        m.register_uri(
+            'GET',
+            'http://example.com/todos',
+            json=[],
+            status_code=200
+        )
+
+        self.assertEqual([], Todo.find())
+
+    def test_timeout(self, m):
+        m.register_uri(
+            'GET',
+            'http://example.com/todos',
+            json=[],
+            status_code=200
+        )
+
+        self.assertEqual([], TodoWithTimeout.find())
