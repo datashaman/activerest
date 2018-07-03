@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='activerest',
-    version='0.0.2',
+    version='0.0.3',
     description='Python REST resource client, modeled on Ruby on Rails\' ActiveResource.',
     author='Marlin Forbes',
     author_email='marlinf@datashaman.com',
