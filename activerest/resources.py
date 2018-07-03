@@ -48,7 +48,7 @@ class Resource(object):
             method = 'PUT'
 
         data = self._transform_params(self.attributes)
-        response = requests.request(method, url, data=data)
+        response = self.__class__._request(method, url, data=data)
 
         if (
             method == 'POST' and response.status_code == 201
@@ -74,13 +74,13 @@ class Resource(object):
     @classmethod
     def delete(cls, id):
         url = cls._url(id)
-        response = requests.delete(url)
+        response = cls._request('DELETE', url)
         return response.status_code == 200
 
     @classmethod
     def exists(cls, id):
         url = cls._url(id)
-        response = requests.head(url)
+        response = cls._request('HEAD', url)
         return response.status_code == 200
 
     @classmethod
@@ -108,7 +108,7 @@ class Resource(object):
                 params = cls._transform_params(params)
                 url = '%s?%s' % (url, urlencode(params))
 
-        return requests.get(url).json()
+        return cls._request('GET', url).json()
 
     @classmethod
     def _transform_params(cls, params):
@@ -135,3 +135,15 @@ class Resource(object):
             url = '%s/%s' % (url, path)
 
         return url
+
+    @classmethod
+    def _request(cls, method, url, **kwargs):
+        if hasattr(cls.Meta, 'auth_type'):
+            if cls.Meta.auth_type == 'basic':
+                auth_class = requests.auth.HTTPBasicAuth
+            if cls.Meta.auth_type == 'digest':
+                auth_class = requests.auth.HTTPDigestAuth
+
+            kwargs['auth'] = auth_class(cls.Meta.user, cls.Meta.password)
+        response = requests.request(method, url, **kwargs)
+        return response

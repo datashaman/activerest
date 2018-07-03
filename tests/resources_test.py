@@ -1,3 +1,5 @@
+import base64
+import requests
 import requests_mock
 
 from activerest import Resource
@@ -10,12 +12,24 @@ class Todo(Resource):
     class Meta:
         site = 'http://example.com'
 
+
 class TodoWithElementName(Resource):
     completed = False
 
     class Meta:
         site = 'http://example.com'
         element_name = 'todo'
+
+
+class TodoWithBasicAuth(Resource):
+    completed = False
+
+    class Meta:
+        site = 'http://example.com'
+        element_name = 'todos'
+        auth_type = 'basic'
+        user = 'user'
+        password = 'password'
 
 
 @requests_mock.Mocker()
@@ -198,3 +212,24 @@ class ResourcesTest(TestCase):
 
         actual = TodoWithElementName.find(1)
         self.assertEqual(expected, actual.attributes)
+
+    def test_basic_auth(self, m):
+        expected = {'id': 1, 'title': 'new todo', 'completed': False}
+
+        request_headers = {
+            'Authorization': requests.auth._basic_auth_str('user', 'password'),
+        }
+
+        m.register_uri(
+            'GET',
+            'http://example.com/todos/1',
+            request_headers=request_headers,
+            json=expected,
+            status_code=200
+        )
+
+        actual = TodoWithBasicAuth.find(1)
+        self.assertEqual(expected, actual.attributes)
+
+    def test_digest_auth(self, m):
+        """Impossible to create an authorization header without a real request."""
