@@ -13,20 +13,12 @@ class Todo(Resource):
         site = 'http://example.com'
 
 
-class TodoWithCollectionName(Resource):
-    completed = False
-
-    class Meta:
-        site = 'http://example.com'
-        collection_name = 'todo'
-
-
 class TodoWithElementName(Resource):
     completed = False
 
     class Meta:
         site = 'http://example.com'
-        element_name = 'todo'
+        element_name = 'horse'
 
 
 class TodoWithBasicAuth(Resource):
@@ -34,7 +26,7 @@ class TodoWithBasicAuth(Resource):
 
     class Meta:
         site = 'http://example.com'
-        collection_name = 'todos'
+        element_name = 'todo'
         auth_type = 'basic'
         user = 'user'
         password = 'password'
@@ -44,7 +36,7 @@ class TodoWithDigestAuth(Resource):
 
     class Meta:
         site = 'http://example.com'
-        collection_name = 'todos'
+        element_name = 'todo'
         auth_type = 'digest'
         user = 'user'
         password = 'password'
@@ -54,7 +46,7 @@ class TodoWithTimeout(Resource):
 
     class Meta:
         site = 'http://example.com'
-        collection_name = 'todos'
+        element_name = 'todo'
         timeout = 60
 
 
@@ -226,25 +218,12 @@ class ResourcesTest(TestCase):
         self.assertTrue(todo.is_persisted())
         self.assert_todo(amended, todo)
 
-    def test_collection_name(self, m):
-        expected = {'id': 1, 'title': 'new todo', 'completed': False}
-
-        m.register_uri(
-            'GET',
-            'http://example.com/todo/1',
-            json=expected,
-            status_code=200
-        )
-
-        actual = TodoWithCollectionName.find(1)
-        self.assertEqual(expected, actual.attributes)
-
     def test_element_name(self, m):
         expected = {'id': 1, 'title': 'new todo', 'completed': False}
 
         m.register_uri(
             'GET',
-            'http://example.com/todo/1',
+            'http://example.com/horses/1',
             json=expected,
             status_code=200
         )

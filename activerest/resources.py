@@ -161,20 +161,18 @@ class Resource(object):
         return transformed
 
     @classmethod
-    def collection_name(cls):
-        """Collection name used in generating collection path."""
-        if hasattr(cls.Meta, 'collection_name'):
-            return cls.Meta.collection_name
-
-        return inflection.dasherize(inflection.underscore(inflection.pluralize(cls.__name__)))
-
-    @classmethod
     def element_name(cls):
         """Element name used in generating element path."""
-        if hasattr(cls.Meta, 'element_name'):
-            return cls.Meta.element_name
+        return getattr(cls.Meta,
+                       'element_name',
+                       inflection.dasherize(inflection.underscore(cls.__name__)))
 
-        return cls.collection_name()
+    @classmethod
+    def collection_name(cls):
+        """Collection name used in generating collection path."""
+        return getattr(cls.Meta,
+                       'collection_name',
+                       inflection.pluralize(cls.element_name()))
 
     @classmethod
     def query_string(cls, query_options=None):
@@ -192,15 +190,17 @@ class Resource(object):
     @classmethod
     def element_path(cls, identifier, **query_options):
         """Path to the element API endpoint."""
-        return '/%s/%s%s' % (cls.element_name(), identifier, cls.query_string(query_options))
+        return '/%s/%s%s' % (cls.collection_name(), identifier, cls.query_string(query_options))
 
     @classmethod
     def request(cls, method, path, **kwargs):
         """Request an API endpoint."""
-        if hasattr(cls.Meta, 'auth_type'):
-            if cls.Meta.auth_type == 'basic':
+        if hasattr(cls.Meta, 'user') and hasattr(cls.Meta, 'password'):
+            auth_type = getattr(cls.Meta, 'auth_type', 'basic')
+
+            if auth_type == 'basic':
                 auth_class = requests.auth.HTTPBasicAuth
-            if cls.Meta.auth_type == 'digest':
+            if auth_type == 'digest':
                 auth_class = requests.auth.HTTPDigestAuth
 
             kwargs['auth'] = auth_class(cls.Meta.user, cls.Meta.password)
