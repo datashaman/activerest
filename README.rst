@@ -5,6 +5,9 @@ activerest
 .. image:: https://img.shields.io/pypi/v/activerest.svg
    :alt: activerest on PyPI
    :target: https://pypi.org/project/activerest/
+.. image:: https://img.shields.io/pypi/status/activerest.svg
+   :alt: PyPI - Status
+   :target: https://pypi.org/project/activerest/
 .. image:: https://img.shields.io/pypi/l/activerest.svg
    :alt: PyPI - License
    :target: https://pypi.org/project/activerest/
