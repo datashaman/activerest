@@ -21,6 +21,14 @@ class TodoWithCollectionName(Resource):
         collection_name = 'todo'
 
 
+class TodoWithElementName(Resource):
+    completed = False
+
+    class Meta:
+        site = 'http://example.com'
+        element_name = 'todo'
+
+
 class TodoWithBasicAuth(Resource):
     completed = False
 
@@ -229,6 +237,19 @@ class ResourcesTest(TestCase):
         )
 
         actual = TodoWithCollectionName.find(1)
+        self.assertEqual(expected, actual.attributes)
+
+    def test_element_name(self, m):
+        expected = {'id': 1, 'title': 'new todo', 'completed': False}
+
+        m.register_uri(
+            'GET',
+            'http://example.com/todo/1',
+            json=expected,
+            status_code=200
+        )
+
+        actual = TodoWithElementName.find(1)
         self.assertEqual(expected, actual.attributes)
 
     def test_basic_auth(self, m):

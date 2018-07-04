@@ -169,6 +169,14 @@ class Resource(object):
         return inflection.dasherize(inflection.underscore(inflection.pluralize(cls.__name__)))
 
     @classmethod
+    def element_name(cls):
+        """Element name used in generating element path."""
+        if hasattr(cls.Meta, 'element_name'):
+            return cls.Meta.element_name
+
+        return cls.collection_name()
+
+    @classmethod
     def query_string(cls, query_options=None):
         """Generate query string from query options."""
         if query_options:
@@ -184,7 +192,7 @@ class Resource(object):
     @classmethod
     def element_path(cls, identifier, **query_options):
         """Path to the element API endpoint."""
-        return '/%s/%s%s' % (cls.collection_name(), identifier, cls.query_string(query_options))
+        return '/%s/%s%s' % (cls.element_name(), identifier, cls.query_string(query_options))
 
     @classmethod
     def request(cls, method, path, **kwargs):
