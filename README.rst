@@ -5,6 +5,8 @@ activerest
     :target: https://travis-ci.org/datashaman/activerest
 .. image:: https://coveralls.io/repos/github/datashaman/activerest/badge.svg?branch=master
     :target: https://coveralls.io/github/datashaman/activerest?branch=master
+.. image:: https://img.shields.io/pypi/pyversions/activerest.svg   :alt: PyPI - Python Version
+
 
 Python REST resource client, modeled on Ruby on Rails' ActiveResource.
 
