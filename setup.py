@@ -16,9 +16,9 @@ setup(
     packages=['activerest'],
     license='MIT License',
     install_requires=[
+        'future',
         'inflection',
         'requests',
-        'six',
     ],
     tests_require=[
         'coverage',

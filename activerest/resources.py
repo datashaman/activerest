@@ -1,11 +1,13 @@
 """
 Python REST client, modeled on Ruby on Rails' ActiveResource
 """
+from future.standard_library import install_aliases
+install_aliases()
 
 import requests
 import inflection
 
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 
 class Resource(object):
