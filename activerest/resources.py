@@ -54,7 +54,7 @@ class Resource(object):
 
     def primary_key(self):
         """The primary key value."""
-        return self.__dict__[type(self).pk()]
+        return self.__dict__[self.pk()]
 
     def is_new(self):
         """Is the resource new, ie unsaved."""
@@ -83,14 +83,14 @@ class Resource(object):
     def save(self):
         """Save the resource by calling the API."""
         if self.is_new():
-            path = type(self).collection_path()
+            path = self.collection_path()
             method = 'POST'
         else:
-            path = type(self).element_path(self.primary_key())
+            path = self.element_path(self.primary_key())
             method = 'PUT'
 
         data = self._transform_params(self.attributes)
-        response = type(self).request(method, path, data=data)
+        response = self.request(method, path, data=data)
 
         if (method == 'POST' and response.status_code == 201
                 or method == 'PUT' and response.status_code == 200):
@@ -102,7 +102,7 @@ class Resource(object):
 
     def destroy(self):
         """Delete the resource by calling the API."""
-        if self.is_persisted() and type(self).delete(self.primary_key()):
+        if self.is_persisted() and self.delete(self.primary_key()):
             self._meta['persisted'] = False
             return True
 
