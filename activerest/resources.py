@@ -1,8 +1,12 @@
 """
 Python REST client, modeled on Ruby on Rails' ActiveResource
 """
+from __future__ import absolute_import
+
 from future.standard_library import install_aliases
+from future.utils import viewitems
 install_aliases()
+
 
 import requests
 import inflection
@@ -14,7 +18,7 @@ class Resource(object):
     def __init__(self, _meta=None, **attributes):
         instance_defaults = {}
 
-        for key, value in self.__class__.__dict__.items():
+        for (key, value) in viewitems(self.__class__.__dict__):
             if key != 'Meta' and key[0] != '_':
                 instance_defaults[key] = value
 
@@ -34,11 +38,11 @@ class Resource(object):
     def __repr__(self):
         parts = {}
 
-        for key, value in self.__dict__.items():
+        for (key, value) in viewitems(self.__dict__):
             if key[0] != '_':
                 parts[key] = repr(value)
 
-        string = ' '.join(['%s=%s' % (key, value) for key, value in parts.items()])
+        string = ' '.join(['%s=%s' % (key, value) for (key, value) in viewitems(parts)])
 
         return '%s(%s)' % (self.__class__.__name__, string)
 
@@ -46,7 +50,7 @@ class Resource(object):
     @property
     def attributes(self):
         """Attributes on the resource."""
-        return dict((k, v) for k, v in self.__dict__.items() if k[0] != '_')
+        return dict((key, value) for (key, value) in viewitems(self.__dict__) if key[0] != '_')
 
     def primary_key(self):
         """The primary key value."""
@@ -62,7 +66,7 @@ class Resource(object):
 
     def load(self, attributes):
         """Set the attributes on the resource."""
-        for key, value in attributes.items():
+        for (key, value) in viewitems(attributes):
             if key[0] != '_':
                 setattr(self, key, value)
 
@@ -154,7 +158,7 @@ class Resource(object):
     def _transform_params(cls, params):
         transformed = {}
 
-        for key, value in params.items():
+        for (key, value) in viewitems(params):
             if isinstance(value, bool):
                 value = 'true' if value else 'false'
 

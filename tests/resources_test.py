@@ -1,3 +1,5 @@
+from future.utils import viewitems
+
 import base64
 import requests
 import requests_mock
@@ -211,8 +213,8 @@ class ResourcesTest(TestCase):
         )
 
         todo = Todo.find(1)
-        for k, v in changes.items():
-            setattr(todo, k, v)
+        for (key, value) in viewitems(changes):
+            setattr(todo, key, value)
         todo.save()
 
         self.assertTrue(todo.is_persisted())
