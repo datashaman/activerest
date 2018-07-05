@@ -18,7 +18,7 @@ class Resource(object):
     def __init__(self, _meta=None, **attributes):
         instance_defaults = {}
 
-        for (key, value) in viewitems(self.__class__.__dict__):
+        for (key, value) in viewitems(type(self).__dict__):
             if key != 'Meta' and key[0] != '_':
                 instance_defaults[key] = value
 
@@ -44,7 +44,7 @@ class Resource(object):
 
         string = ' '.join(['%s=%s' % (key, value) for (key, value) in viewitems(parts)])
 
-        return '%s(%s)' % (self.__class__.__name__, string)
+        return '%s(%s)' % (type(self).__name__, string)
 
 
     @property
@@ -54,7 +54,7 @@ class Resource(object):
 
     def primary_key(self):
         """The primary key value."""
-        return self.__dict__[self.__class__.pk()]
+        return self.__dict__[type(self).pk()]
 
     def is_new(self):
         """Is the resource new, ie unsaved."""
@@ -83,14 +83,14 @@ class Resource(object):
     def save(self):
         """Save the resource by calling the API."""
         if self.is_new():
-            path = self.__class__.collection_path()
+            path = type(self).collection_path()
             method = 'POST'
         else:
-            path = self.__class__.element_path(self.primary_key())
+            path = type(self).element_path(self.primary_key())
             method = 'PUT'
 
         data = self._transform_params(self.attributes)
-        response = self.__class__.request(method, path, data=data)
+        response = type(self).request(method, path, data=data)
 
         if (method == 'POST' and response.status_code == 201
                 or method == 'PUT' and response.status_code == 200):
@@ -102,7 +102,7 @@ class Resource(object):
 
     def destroy(self):
         """Delete the resource by calling the API."""
-        if self.is_persisted() and self.__class__.delete(self.primary_key()):
+        if self.is_persisted() and type(self).delete(self.primary_key()):
             self._meta['persisted'] = False
             return True
 
