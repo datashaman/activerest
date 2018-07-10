@@ -233,17 +233,18 @@ class Resource(with_metaclass(MetaResource, object)):
                 params = {}
             path = cls.collection_path(**params)
 
-        result = cls.connection().get(path).json()
+        result = cls.connection().get(path)
 
         if identifier:
-            if result:
-                return cls(_meta={'persisted': True}, **result)
-            return None
+            if result.status_code == 404:
+                return None
+            if result.status_code == 200:
+                return cls(_meta={'persisted': True}, **result.json())
 
-        if result:
-            return [cls(_meta={'persisted': True}, **row) for row in result]
+        if result.status_code == 200:
+            return [cls(_meta={'persisted': True}, **row) for row in result.json()]
 
-        return []
+        result.raise_for_status()
 
     @classmethod
     def _transform_params(cls, params):

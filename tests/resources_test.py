@@ -7,6 +7,7 @@ import six
 
 from activerest import Connection, Resource
 from furl import furl
+from requests.exceptions import HTTPError
 from unittest import TestCase
 
 class ExampleConnection(Connection):
@@ -55,6 +56,10 @@ class TodoWithConnectionClass(Resource):
     read_timeout = 27
     timeout = 12
     username = 'username'
+
+
+class TodoWithoutSite(Resource):
+    pass
 
 
 @requests_mock.Mocker()
@@ -372,3 +377,47 @@ class ResourcesTest(TestCase):
         self.assertEqual(TodoWithConnectionClass.read_timeout, connection.read_timeout)
         self.assertEqual(TodoWithConnectionClass.timeout, connection.timeout)
         self.assertEqual(TodoWithConnectionClass.username, connection.username)
+
+    def test_without_site(self, m):
+        with self.assertRaises(ValueError, msg='resource must have site defined'):
+            todo = TodoWithoutSite()
+
+    def test_save_error(self, m):
+        m.register_uri(
+            'POST',
+            'http://example.com/todos',
+            status_code=500
+        )
+
+        todo = Todo()
+        self.assertFalse(todo.save())
+
+    def test_not_found(self, m):
+        m.register_uri(
+            'GET',
+            'http://example.com/todos/1',
+            status_code=404
+        )
+
+        todo = Todo.find(1)
+        self.assertIsNone(todo)
+
+    def test_find_single_exception(self, m):
+        m.register_uri(
+            'GET',
+            'http://example.com/todos/1',
+            status_code=500
+        )
+
+        with self.assertRaises(HTTPError):
+            Todo.find(1)
+
+    def test_find_collection_exception(self, m):
+        m.register_uri(
+            'GET',
+            'http://example.com/todos',
+            status_code=500
+        )
+
+        with self.assertRaises(HTTPError):
+            Todo.find()
