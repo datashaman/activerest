@@ -33,6 +33,10 @@ META_ATTRIBUTES = {
     'collection_name': {
         'default': lambda cls: inflection.pluralize(cls.element_name)
     },
+    'connection_class': {
+        'reset_connection': True,
+        'default': lambda cls: Connection
+    },
     'element_name': {
         'default': lambda cls: inflection.dasherize(inflection.underscore(cls.__name__))
     },
@@ -187,7 +191,7 @@ class Resource(with_metaclass(MetaResource, object)):
         if cls_id not in cls._connections \
                 or cls._connections[cls_id] is None \
                 or refresh:
-            connection = Connection(cls.site)
+            connection = cls.connection_class(cls.site)
             for attr in CONNECTION_ATTRIBUTES:
                 value = getattr(cls, attr, None)
                 if value:

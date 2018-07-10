@@ -5,8 +5,12 @@ import requests
 import requests_mock
 import six
 
-from activerest import Resource
+from activerest import Connection, Resource
+from furl import furl
 from unittest import TestCase
+
+class ExampleConnection(Connection):
+    pass
 
 
 class Todo(Resource):
@@ -38,6 +42,19 @@ class TodoWithTimeout(Resource):
     site = 'http://example.com'
     element_name = 'todo'
     timeout = 60
+
+
+class TodoWithConnectionClass(Resource):
+    site = 'http://example.com'
+    connection_class = ExampleConnection
+
+    auth_type = 'basic'
+    open_timeout = 3
+    password = 'password'
+    proxies = ('http://proxy.example.com', 'https://proxy.example.com')
+    read_timeout = 27
+    timeout = 12
+    username = 'username'
 
 
 @requests_mock.Mocker()
@@ -333,3 +350,25 @@ class ResourcesTest(TestCase):
         )
 
         self.assertEqual([], TodoWithTimeout.find())
+
+    def test_connection_class(self, m):
+        m.register_uri(
+            'GET',
+            'http://example.com/todos',
+            json=[],
+            status_code=200
+        )
+
+        connection = TodoWithConnectionClass.connection()
+
+        self.assertIsInstance(connection, ExampleConnection)
+
+        self.assertEqual(furl(TodoWithConnectionClass.site), connection.site)
+
+        self.assertEqual(TodoWithConnectionClass.auth_type, connection.auth_type)
+        self.assertEqual(TodoWithConnectionClass.open_timeout, connection.open_timeout)
+        self.assertEqual(TodoWithConnectionClass.password, connection.password)
+        self.assertEqual(TodoWithConnectionClass.proxies, connection.proxies)
+        self.assertEqual(TodoWithConnectionClass.read_timeout, connection.read_timeout)
+        self.assertEqual(TodoWithConnectionClass.timeout, connection.timeout)
+        self.assertEqual(TodoWithConnectionClass.username, connection.username)
