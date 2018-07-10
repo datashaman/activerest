@@ -3,6 +3,7 @@ from future.utils import viewitems
 import base64
 import requests
 import requests_mock
+import six
 
 from activerest import Resource
 from unittest import TestCase
@@ -252,7 +253,11 @@ class ResourcesTest(TestCase):
         self.assertEqual(expected, actual.attributes)
 
     def test_repr(self, m):
-        expected = "Todo(id=1, title='new todo', completed=False)"
+        if six.PY2:
+            expected = "Todo(completed=False, id=1, title='new todo')"
+        else:
+            expected = "Todo(id=1, title='new todo', completed=False)"
+
         todo = Todo(id=1, title='new todo', completed=False)
         self.assertEqual(expected, str(todo))
 
