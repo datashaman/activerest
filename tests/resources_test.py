@@ -58,7 +58,10 @@ class TodoWithConnectionClass(Resource):
     auth_type = 'basic'
     open_timeout = 3
     password = 'password'
-    proxies = ('http://proxy.example.com', 'https://proxy.example.com')
+    proxies = {
+        'http': 'http://proxy.example.com',
+        'https': 'https://proxy.example.com',
+    }
     read_timeout = 27
     timeout = 12
     username = 'username'
@@ -93,7 +96,7 @@ class ResourcesTest(TestCase):
             'GET',
             'http://example.com/todos',
             json=expected,
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         actual = Todo.find()
@@ -106,7 +109,7 @@ class ResourcesTest(TestCase):
             'GET',
             'http://example.com/todos/1',
             json=expected,
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         actual = Todo.find(1)
@@ -121,7 +124,7 @@ class ResourcesTest(TestCase):
             'GET',
             'http://example.com/todos?title=still+todo',
             json=expected,
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         actual = Todo.find(params={'title': 'still todo'})
@@ -137,7 +140,7 @@ class ResourcesTest(TestCase):
             'GET',
             'http://example.com/todos',
             json=expected,
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         actual = Todo.all()
@@ -148,7 +151,7 @@ class ResourcesTest(TestCase):
         m.register_uri(
             'DELETE',
             'http://example.com/todos/1',
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         self.assertTrue(Todo.delete(1))
@@ -157,7 +160,7 @@ class ResourcesTest(TestCase):
         m.register_uri(
             'HEAD',
             'http://example.com/todos/1',
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         self.assertTrue(Todo.exists(1))
@@ -166,7 +169,7 @@ class ResourcesTest(TestCase):
         m.register_uri(
             'HEAD',
             'http://example.com/todos/1',
-            status_code=404
+            status_code=requests.codes.not_found
         )
 
         self.assertFalse(Todo.exists(1))
@@ -178,13 +181,13 @@ class ResourcesTest(TestCase):
             'GET',
             'http://example.com/todos/1',
             json=expected,
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         m.register_uri(
             'DELETE',
             'http://example.com/todos/1',
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         todo = Todo.find(1)
@@ -199,7 +202,7 @@ class ResourcesTest(TestCase):
             'POST',
             'http://example.com/todos',
             json=expected,
-            status_code=201
+            status_code=requests.codes.created
         )
 
         todo = Todo(**attributes)
@@ -218,14 +221,14 @@ class ResourcesTest(TestCase):
             'GET',
             'http://example.com/todos/1',
             json=expected,
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         m.register_uri(
             'PUT',
             'http://example.com/todos/1',
             json=amended,
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         todo = Todo.find(1)
@@ -243,7 +246,7 @@ class ResourcesTest(TestCase):
             'GET',
             'http://example.com/horses/1',
             json=expected,
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         actual = TodoWithElementName.find(1)
@@ -256,7 +259,7 @@ class ResourcesTest(TestCase):
             'GET',
             'http://example.com/todos/1',
             json=expected,
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         actual = TodoWithDigestAuth.find(1)
@@ -274,7 +277,7 @@ class ResourcesTest(TestCase):
             'http://example.com/todos/1',
             request_headers=request_headers,
             json=expected,
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         actual = TodoWithBasicAuth.find(1)
@@ -292,7 +295,7 @@ class ResourcesTest(TestCase):
             'http://example.com/todos/1',
             request_headers=request_headers,
             json=expected,
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         actual = TodoWithBasicAuthInSite.find(1)
@@ -315,14 +318,14 @@ class ResourcesTest(TestCase):
             'GET',
             'http://example.com/todos/1',
             json=expected,
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         m.register_uri(
             'PUT',
             'http://example.com/todos/1',
             json=updated,
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         actual = Todo.find(1)
@@ -342,14 +345,14 @@ class ResourcesTest(TestCase):
             'GET',
             'http://example.com/todos/1',
             json=expected,
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         m.register_uri(
             'PUT',
             'http://example.com/todos/1',
             json=updated,
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         actual = Todo.find(1)
@@ -365,7 +368,7 @@ class ResourcesTest(TestCase):
             'GET',
             'http://example.com/todos',
             json=[],
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         self.assertEqual([], Todo.find())
@@ -375,7 +378,7 @@ class ResourcesTest(TestCase):
             'GET',
             'http://example.com/todos',
             json=[],
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         self.assertEqual([], TodoWithTimeout.find())
@@ -385,7 +388,7 @@ class ResourcesTest(TestCase):
             'GET',
             'http://example.com/todos',
             json=[],
-            status_code=200
+            status_code=requests.codes.ok
         )
 
         connection = TodoWithConnectionClass.connection()

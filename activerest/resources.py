@@ -170,7 +170,7 @@ class Resource(with_metaclass(MetaResource, object)):
             path = self.element_path(self.primary_key())
             response = self.connection().put(path, data=data)
 
-        if response.status_code in [200, 201]:
+        if response.status_code in [requests.codes.ok, requests.codes.created]:
             self._meta['persisted'] = True
             self.load(response.json())
             return True
@@ -214,14 +214,14 @@ class Resource(with_metaclass(MetaResource, object)):
         """Delete a single resource by identifier."""
         path = cls.element_path(identifier)
         response = cls.connection().delete(path)
-        return response.status_code == 200
+        return response.status_code == requests.codes.ok
 
     @classmethod
     def exists(cls, identifier):
         """Check if a single resource exists by identifier."""
         path = cls.element_path(identifier)
         response = cls.connection().head(path)
-        return response.status_code == 200
+        return response.status_code == requests.codes.ok
 
     @classmethod
     def find(cls, identifier=None, params=None):
@@ -238,12 +238,12 @@ class Resource(with_metaclass(MetaResource, object)):
         result = cls.connection().get(path, params=params)
 
         if identifier:
-            if result.status_code == 404:
+            if result.status_code == requests.codes.not_found:
                 return None
-            if result.status_code == 200:
+            if result.status_code == requests.codes.ok:
                 return cls(_meta={'persisted': True}, **result.json())
 
-        if result.status_code == 200:
+        if result.status_code == requests.codes.ok:
             return [cls(_meta={'persisted': True}, **row) for row in result.json()]
 
         result.raise_for_status()
