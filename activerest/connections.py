@@ -134,6 +134,10 @@ class Connection(object):
         if open_timeout or read_timeout:
             kwargs['timeout'] = (open_timeout, read_timeout)
 
-        url = self._site.join(path)
+        url = furl().set(scheme=self._site.scheme,
+                         host=self._site.host,
+                         port=self._site.port,
+                         path=path)
+
         response = requests.request(method, url, **kwargs)
         return response

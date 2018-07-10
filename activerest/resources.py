@@ -226,14 +226,16 @@ class Resource(with_metaclass(MetaResource, object)):
     @classmethod
     def find(cls, identifier=None, params=None):
         """Find resources by ID or by query options."""
+        if params is None:
+            params = {}
+
         if identifier:
             path = cls.element_path(identifier)
         else:
-            if params is None:
-                params = {}
-            path = cls.collection_path(**params)
+            path = cls.collection_path()
 
-        result = cls.connection().get(path)
+        params = cls._transform_params(params)
+        result = cls.connection().get(path, params=params)
 
         if identifier:
             if result.status_code == 404:
@@ -259,19 +261,11 @@ class Resource(with_metaclass(MetaResource, object)):
         return transformed
 
     @classmethod
-    def query_string(cls, query_options=None):
-        """Generate query string from query options."""
-        if query_options:
-            query_options = cls._transform_params(query_options)
-            return '?%s' % urlencode(query_options)
-        return ''
-
-    @classmethod
-    def collection_path(cls, **query_options):
+    def collection_path(cls):
         """Path to the collection API endpoint."""
-        return '/%s%s' % (cls.collection_name, cls.query_string(query_options))
+        return '/%s' % cls.collection_name
 
     @classmethod
-    def element_path(cls, identifier, **query_options):
+    def element_path(cls, identifier):
         """Path to the element API endpoint."""
-        return '/%s/%s%s' % (cls.collection_name, identifier, cls.query_string(query_options))
+        return '/%s/%s' % (cls.collection_name, identifier)

@@ -31,6 +31,12 @@ class TodoWithBasicAuth(Resource):
     password = 'password'
 
 
+class TodoWithBasicAuthInSite(Resource):
+    site = 'http://user:password@example.com'
+    element_name = 'todo'
+    auth_type = 'basic'
+
+
 class TodoWithDigestAuth(Resource):
     site = 'http://example.com'
     element_name = 'todo'
@@ -272,6 +278,24 @@ class ResourcesTest(TestCase):
         )
 
         actual = TodoWithBasicAuth.find(1)
+        self.assertEqual(expected, actual.attributes)
+
+    def test_basic_auth_in_site(self, m):
+        expected = {'id': 1, 'title': 'new todo', 'completed': False}
+
+        request_headers = {
+            'Authorization': requests.auth._basic_auth_str('user', 'password'),
+        }
+
+        m.register_uri(
+            'GET',
+            'http://example.com/todos/1',
+            request_headers=request_headers,
+            json=expected,
+            status_code=200
+        )
+
+        actual = TodoWithBasicAuthInSite.find(1)
         self.assertEqual(expected, actual.attributes)
 
     def test_repr(self, m):
