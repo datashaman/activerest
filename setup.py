@@ -21,6 +21,7 @@ setup(
         'inflection',
         'requests',
         'six',
+        'xmltodict',
     ],
     tests_require=[
         'coverage',

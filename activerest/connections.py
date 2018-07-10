@@ -1,14 +1,22 @@
 import logging
-
-log = logging.getLogger(__name__)
-
+import activerest.formats.json
 import requests
 
 from furl import furl
 
 
+HTTP_FORMAT_HEADER_NAMES = {
+    'GET': 'Accept',
+    'PUT': 'Content-Type',
+    'POST': 'Content-Type',
+    'PATCH': 'Content-Type',
+    'DELETE': 'Accept',
+    'HEAD': 'Accept',
+}
+
 class Connection(object):
     _site = None
+    _format = None
 
     _auth_type = 'basic'
     username = None
@@ -18,12 +26,15 @@ class Connection(object):
     _open_timeout = None
     _read_timeout = None
 
+    _default_header = None
+
     proxies = None
 
     requests = []
 
-    def __init__(self, site):
+    def __init__(self, site, format=activerest.formats.json):
         self.site = site
+        self.format = format
 
     @property
     def site(self):
@@ -106,6 +117,8 @@ class Connection(object):
         return self._request('HEAD', path, **kwargs)
 
     def _request(self, method, path, **kwargs):
+        kwargs['headers'] = self.build_request_headers(kwargs.get('headers', {}), method)
+
         if self.username and self.password:
             if self._auth_type == 'basic':
                 auth_class = requests.auth.HTTPBasicAuth
@@ -141,3 +154,22 @@ class Connection(object):
 
         response = requests.request(method, url, **kwargs)
         return response
+
+    @property
+    def default_header(self):
+        if self._default_header:
+            return self._default_header
+        self._default_header = {}
+        return self._default_header
+
+    def build_request_headers(self, headers, method):
+        result = {}
+        result.update(self.default_header)
+        result.update(self.http_format_header(method))
+        result.update(headers)
+        return result
+
+    def http_format_header(self, method):
+        return {
+            HTTP_FORMAT_HEADER_NAMES[method]: self.format.mime_type(),
+        }

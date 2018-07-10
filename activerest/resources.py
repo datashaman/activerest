@@ -7,6 +7,7 @@ from future.standard_library import install_aliases
 from future.utils import viewitems
 install_aliases()
 
+import activerest.formats.json
 import requests
 import inflection
 
@@ -33,12 +34,20 @@ META_ATTRIBUTES = {
     'collection_name': {
         'default': lambda cls: inflection.pluralize(cls.element_name)
     },
+    'collection_parser': {
+    },
     'connection_class': {
         'reset_connection': True,
         'default': lambda cls: Connection
     },
     'element_name': {
         'default': lambda cls: inflection.dasherize(inflection.underscore(cls.__name__))
+    },
+    'format': {
+        'default': lambda cls: activerest.formats.json
+    },
+    'include_format_in_path': {
+        'default': lambda cls: True
     },
     'open_timeout': {
         'reset_connection': True,
@@ -94,6 +103,9 @@ class MetaResource(type):
                 cls._attributes[cls_id] = {}
             attributes = cls._attributes[cls_id]
             attributes[attr] = value
+
+            if attr == 'format' and cls.site:
+                cls.connection().format = value
         else:
             super(MetaResource, cls).__setattr__(attr, value)
 
@@ -197,7 +209,7 @@ class Resource(with_metaclass(MetaResource, object)):
         if cls_id not in cls._connections \
                 or cls._connections[cls_id] is None \
                 or refresh:
-            connection = cls.connection_class(cls.site)
+            connection = cls.connection_class(cls.site, cls.format)
             for attr in CONNECTION_ATTRIBUTES:
                 value = getattr(cls, attr, None)
                 if value:
@@ -241,18 +253,22 @@ class Resource(with_metaclass(MetaResource, object)):
             path = cls.collection_path()
 
         params = cls._transform_params(params)
-        result = cls.connection().get(path, params=params)
+        response = cls.connection().get(path, params=params)
 
         if identifier:
-            if result.status_code == requests.codes.not_found:
+            if response.status_code == requests.codes.not_found:
                 return None
-            if result.status_code == requests.codes.ok:
-                return cls(_meta={'persisted': True}, **result.json())
+            if response.status_code == requests.codes.ok:
+                return cls(_meta={'persisted': True}, **cls._decode_response(response))
 
-        if result.status_code == requests.codes.ok:
-            return [cls(_meta={'persisted': True}, **row) for row in result.json()]
+        if response.status_code == requests.codes.ok:
+            return [cls(_meta={'persisted': True}, **row) for row in cls._decode_response(response)]
 
-        result.raise_for_status()
+        response.raise_for_status()
+
+    @classmethod
+    def _decode_response(cls, response):
+        return cls.format.decode(response.text)
 
     @classmethod
     def _transform_params(cls, params):
