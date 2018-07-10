@@ -7,45 +7,120 @@ from future.standard_library import install_aliases
 from future.utils import viewitems
 install_aliases()
 
-
 import requests
 import inflection
 
+from activerest.connections import Connection
+from furl import furl
+from six import with_metaclass
 from urllib.parse import urlencode
 
 
-class Resource(object):
+CONNECTION_ATTRIBUTES = [
+    'auth_type',
+    'open_timeout',
+    'password',
+    'proxies',
+    'read_timeout',
+    'timeout',
+    'username',
+]
+
+META_ATTRIBUTES = {
+    'auth_type': {
+        'reset_connection': True,
+    },
+    'collection_name': {
+        'default': lambda cls: inflection.pluralize(cls.element_name)
+    },
+    'element_name': {
+        'default': lambda cls: inflection.dasherize(inflection.underscore(cls.__name__))
+    },
+    'open_timeout': {
+        'reset_connection': True,
+    },
+    'password': {
+        'reset_connection': True,
+    },
+    'proxies': {
+        'reset_connection': True,
+    },
+    'read_timeout': {
+        'reset_connection': True,
+    },
+    'timeout': {
+        'reset_connection': True,
+    },
+    'username': {
+        'reset_connection': True,
+    },
+}
+
+
+class MetaResource(type):
+    _attributes = {}
+    _connections = {}
+
+    def __init__(cls, name, bases, dct):
+        super(MetaResource, cls).__init__(name, bases, dct)
+        for attr in META_ATTRIBUTES:
+            if attr in dct:
+                value = dct[attr]
+                setattr(cls, attr, value)
+
+    def __getattribute__(cls, attr):
+        if attr in META_ATTRIBUTES:
+            cls_id = id(cls)
+            if cls_id not in cls._attributes:
+                cls._attributes[cls_id] = {}
+            attributes = cls._attributes[cls_id]
+            if attr not in attributes:
+                default = META_ATTRIBUTES[attr].get('default', lambda cls: None)
+                setattr(cls, attr, default(cls))
+            return attributes[attr]
+        return super(MetaResource, cls).__getattribute__(attr)
+
+    def __setattr__(cls, attr, value):
+        if attr in META_ATTRIBUTES:
+            cls_id = id(cls)
+            if cls_id not in cls._connections \
+                    or META_ATTRIBUTES[attr].get('reset_connection', False):
+                cls._connections[cls_id] = None
+            if cls_id not in cls._attributes:
+                cls._attributes[cls_id] = {}
+            attributes = cls._attributes[cls_id]
+            attributes[attr] = value
+        else:
+            super(MetaResource, cls).__setattr__(attr, value)
+
+
+class Resource(with_metaclass(MetaResource, object)):
     def __init__(self, _meta=None, **attributes):
-        instance_defaults = {}
+        cls = type(self)
 
-        for (key, value) in viewitems(type(self).__dict__):
-            if key != 'Meta' and key[0] != '_':
-                instance_defaults[key] = value
+        if not hasattr(cls, 'site'):
+            raise ValueError('resource must have site defined')
 
-        self.__dict__.update(instance_defaults)
+        if not isinstance(cls.site, furl):
+            cls.site = furl(cls.site)
+
         self.__dict__.update(attributes)
 
-        meta_defaults = {
+        self._meta = {
             'persisted': False,
         }
 
-        if _meta is None:
-            _meta = {}
-        self._meta = {}
-        self._meta.update(meta_defaults)
-        self._meta.update(_meta)
+        if _meta is not None:
+            self._meta.update(_meta)
 
     def __repr__(self):
-        parts = {}
+        parts = []
 
         for (key, value) in viewitems(self.__dict__):
             if key[0] != '_':
-                parts[key] = repr(value)
+                parts.append('%s=%s' % (key, repr(value)))
 
-        string = ' '.join(['%s=%s' % (key, value) for (key, value) in viewitems(parts)])
-
-        return '%s(%s)' % (type(self).__name__, string)
-
+        return '%s(%s)' % (type(self).__name__, ', '.join(parts))
 
     @property
     def attributes(self):
@@ -82,18 +157,16 @@ class Resource(object):
 
     def save(self):
         """Save the resource by calling the API."""
+        data = self._transform_params(self.attributes)
+
         if self.is_new():
             path = self.collection_path()
-            method = 'POST'
+            response = self.connection().post(path, data=data)
         else:
             path = self.element_path(self.primary_key())
-            method = 'PUT'
+            response = self.connection().put(path, data=data)
 
-        data = self._transform_params(self.attributes)
-        response = self.request(method, path, data=data)
-
-        if (method == 'POST' and response.status_code == 201
-                or method == 'PUT' and response.status_code == 200):
+        if response.status_code in [200, 201]:
             self._meta['persisted'] = True
             self.load(response.json())
             return True
@@ -109,9 +182,23 @@ class Resource(object):
         return False
 
     @classmethod
+    def connection(cls, refresh=False):
+        cls_id = id(cls)
+        if cls_id not in cls._connections \
+                or cls._connections[cls_id] is None \
+                or refresh:
+            connection = Connection(cls.site)
+            for attr in CONNECTION_ATTRIBUTES:
+                value = getattr(cls, attr, None)
+                if value:
+                    setattr(connection, attr, value)
+            cls._connections[cls_id] = connection
+        return cls._connections[cls_id]
+
+    @classmethod
     def pk(cls):
         """Name of the primary key attribute."""
-        return getattr(cls.Meta, 'primary_key', 'id')
+        return getattr(cls, '_primary_key', 'id')
 
     @classmethod
     def all(cls):
@@ -122,14 +209,14 @@ class Resource(object):
     def delete(cls, identifier):
         """Delete a single resource by identifier."""
         path = cls.element_path(identifier)
-        response = cls.request('DELETE', path)
+        response = cls.connection().delete(path)
         return response.status_code == 200
 
     @classmethod
     def exists(cls, identifier):
         """Check if a single resource exists by identifier."""
         path = cls.element_path(identifier)
-        response = cls.request('HEAD', path)
+        response = cls.connection().head(path)
         return response.status_code == 200
 
     @classmethod
@@ -142,7 +229,7 @@ class Resource(object):
                 params = {}
             path = cls.collection_path(**params)
 
-        result = cls.request('GET', path).json()
+        result = cls.connection().get(path).json()
 
         if identifier:
             if result:
@@ -167,20 +254,6 @@ class Resource(object):
         return transformed
 
     @classmethod
-    def element_name(cls):
-        """Element name used in generating element path."""
-        return getattr(cls.Meta,
-                       'element_name',
-                       inflection.dasherize(inflection.underscore(cls.__name__)))
-
-    @classmethod
-    def collection_name(cls):
-        """Collection name used in generating collection path."""
-        return getattr(cls.Meta,
-                       'collection_name',
-                       inflection.pluralize(cls.element_name()))
-
-    @classmethod
     def query_string(cls, query_options=None):
         """Generate query string from query options."""
         if query_options:
@@ -191,27 +264,9 @@ class Resource(object):
     @classmethod
     def collection_path(cls, **query_options):
         """Path to the collection API endpoint."""
-        return '/%s%s' % (cls.collection_name(), cls.query_string(query_options))
+        return '/%s%s' % (cls.collection_name, cls.query_string(query_options))
 
     @classmethod
     def element_path(cls, identifier, **query_options):
         """Path to the element API endpoint."""
-        return '/%s/%s%s' % (cls.collection_name(), identifier, cls.query_string(query_options))
-
-    @classmethod
-    def request(cls, method, path, **kwargs):
-        """Request an API endpoint."""
-        if hasattr(cls.Meta, 'user') and hasattr(cls.Meta, 'password'):
-            auth_type = getattr(cls.Meta, 'auth_type', 'basic')
-
-            if auth_type == 'basic':
-                auth_class = requests.auth.HTTPBasicAuth
-            if auth_type == 'digest':
-                auth_class = requests.auth.HTTPDigestAuth
-
-            kwargs['auth'] = auth_class(cls.Meta.user, cls.Meta.password)
-        if hasattr(cls.Meta, 'timeout'):
-            kwargs['timeout'] = cls.Meta.timeout
-        url = '%s%s' % (cls.Meta.site, path)
-        response = requests.request(method, url, **kwargs)
-        return response
+        return '/%s/%s%s' % (cls.collection_name, identifier, cls.query_string(query_options))

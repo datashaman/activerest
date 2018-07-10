@@ -9,47 +9,34 @@ from unittest import TestCase
 
 
 class Todo(Resource):
-    completed = False
-
-    class Meta:
-        site = 'http://example.com'
+    site = 'http://example.com'
 
 
 class TodoWithElementName(Resource):
-    completed = False
-
-    class Meta:
-        site = 'http://example.com'
-        element_name = 'horse'
+    site = 'http://example.com'
+    element_name = 'horse'
 
 
 class TodoWithBasicAuth(Resource):
-    completed = False
+    site = 'http://example.com'
+    element_name = 'todo'
+    auth_type = 'basic'
+    username = 'user'
+    password = 'password'
 
-    class Meta:
-        site = 'http://example.com'
-        element_name = 'todo'
-        auth_type = 'basic'
-        user = 'user'
-        password = 'password'
 
 class TodoWithDigestAuth(Resource):
-    completed = False
+    site = 'http://example.com'
+    element_name = 'todo'
+    auth_type = 'digest'
+    username = 'user'
+    password = 'password'
 
-    class Meta:
-        site = 'http://example.com'
-        element_name = 'todo'
-        auth_type = 'digest'
-        user = 'user'
-        password = 'password'
 
 class TodoWithTimeout(Resource):
-    completed = False
-
-    class Meta:
-        site = 'http://example.com'
-        element_name = 'todo'
-        timeout = 60
+    site = 'http://example.com'
+    element_name = 'todo'
+    timeout = 60
 
 
 @requests_mock.Mocker()
@@ -233,6 +220,19 @@ class ResourcesTest(TestCase):
         actual = TodoWithElementName.find(1)
         self.assertEqual(expected, actual.attributes)
 
+    def test_digest_auth(self, m):
+        expected = {'id': 1, 'title': 'new todo', 'completed': False}
+
+        m.register_uri(
+            'GET',
+            'http://example.com/todos/1',
+            json=expected,
+            status_code=200
+        )
+
+        actual = TodoWithDigestAuth.find(1)
+        self.assertEqual(expected, actual.attributes)
+
     def test_basic_auth(self, m):
         expected = {'id': 1, 'title': 'new todo', 'completed': False}
 
@@ -251,21 +251,8 @@ class ResourcesTest(TestCase):
         actual = TodoWithBasicAuth.find(1)
         self.assertEqual(expected, actual.attributes)
 
-    def test_digest_auth(self, m):
-        expected = {'id': 1, 'title': 'new todo', 'completed': False}
-
-        m.register_uri(
-            'GET',
-            'http://example.com/todos/1',
-            json=expected,
-            status_code=200
-        )
-
-        actual = TodoWithDigestAuth.find(1)
-        self.assertEqual(expected, actual.attributes)
-
     def test_repr(self, m):
-        expected = "Todo(completed=False id=1 title='new todo')"
+        expected = "Todo(id=1, title='new todo', completed=False)"
         todo = Todo(id=1, title='new todo', completed=False)
         self.assertEqual(expected, str(todo))
 
