@@ -85,7 +85,7 @@ class Connection(object):
         if isinstance(read_timeout, (float, int)):
             self._read_timeout = read_timeout
         else:
-            raise ValueError('read_timeout must be an instance of float')
+            raise ValueError('read_timeout must be an instance of float or int')
 
     def get(self, path, **kwargs):
         return self._request('GET', path, **kwargs)
@@ -114,6 +114,9 @@ class Connection(object):
 
             kwargs['auth'] = auth_class(self.username, self.password)
 
+        if self.proxies:
+            kwargs['proxies'] = self.proxies
+
         open_timeout = read_timeout = None
 
         if self._timeout is not None:
@@ -127,9 +130,6 @@ class Connection(object):
 
         if self._read_timeout is not None:
             read_timeout = self._read_timeout
-
-        if self.proxies:
-            kwargs['proxies'] = self.proxies
 
         if open_timeout or read_timeout:
             kwargs['timeout'] = (open_timeout, read_timeout)
