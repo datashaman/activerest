@@ -261,11 +261,19 @@ class Resource(with_metaclass(MetaResource, object)):
         return transformed
 
     @classmethod
-    def collection_path(cls):
-        """Path to the collection API endpoint."""
-        return '/%s' % cls.collection_name
+    def query_string(cls, **params):
+        """Generate query string from query options."""
+        if params:
+            params = cls._transform_params(params)
+            return '?%s' % urlencode(params)
+        return ''
 
     @classmethod
-    def element_path(cls, identifier):
+    def collection_path(cls, **params):
+        """Path to the collection API endpoint."""
+        return '/%s%s' % (cls.collection_name, cls.query_string(**params))
+
+    @classmethod
+    def element_path(cls, identifier, **params):
         """Path to the element API endpoint."""
-        return '/%s/%s' % (cls.collection_name, identifier)
+        return '/%s/%s%s' % (cls.collection_name, identifier, cls.query_string(**params))
