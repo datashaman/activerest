@@ -131,9 +131,15 @@ class Resource(with_metaclass(MetaResource, object)):
         """Attributes on the resource."""
         return dict((key, value) for (key, value) in viewitems(self.__dict__) if key[0] != '_')
 
-    def primary_key(self):
-        """The primary key value."""
-        return self.__dict__[self.pk()]
+    @property
+    def id(self):
+        """Get the id attribute of the resource."""
+        return self.__dict__[self.primary_key()]
+
+    @id.setter
+    def id(self, id):
+        """Set the id attribute of the resource."""
+        self.__dict__[self.primary_key()] = id
 
     def is_new(self):
         """Is the resource new, ie unsaved."""
@@ -167,7 +173,7 @@ class Resource(with_metaclass(MetaResource, object)):
             path = self.collection_path()
             response = self.connection().post(path, data=data)
         else:
-            path = self.element_path(self.primary_key())
+            path = self.element_path(self.id)
             response = self.connection().put(path, data=data)
 
         if response.status_code in [requests.codes.ok, requests.codes.created]:
@@ -179,7 +185,7 @@ class Resource(with_metaclass(MetaResource, object)):
 
     def destroy(self):
         """Delete the resource by calling the API."""
-        if self.is_persisted() and self.delete(self.primary_key()):
+        if self.is_persisted() and self.delete(self.id):
             self._meta['persisted'] = False
             return True
 
@@ -200,7 +206,7 @@ class Resource(with_metaclass(MetaResource, object)):
         return cls._connections[cls_id]
 
     @classmethod
-    def pk(cls):
+    def primary_key(cls):
         """Name of the primary key attribute."""
         return getattr(cls, '_primary_key', 'id')
 
