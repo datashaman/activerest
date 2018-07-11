@@ -10,7 +10,13 @@ def mime_type():
     return 'application/xml'
 
 def encode(data, **kwargs):
-    return xmltodict.unparse(data, full_document=False, pretty=True)
+    if 'full_document' not in kwargs:
+        kwargs['full_document'] = False
+
+    if 'pretty' not in kwargs:
+        kwargs['pretty'] = True
+
+    return xmltodict.unparse(data, **kwargs)
 
 def decode(text):
     return remove_root(xmltodict.parse(text))

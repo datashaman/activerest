@@ -10,7 +10,9 @@ def mime_type():
     return 'application/json'
 
 def encode(data, **kwargs):
-    return json.dumps(data, indent=4, **kwargs)
+    if 'indent' not in kwargs:
+        kwargs['indent'] = 4
+    return json.dumps(data, **kwargs)
 
 def decode(text):
     return remove_root(json.loads(text))

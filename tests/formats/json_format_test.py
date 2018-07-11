@@ -12,13 +12,8 @@ class JsonFormatTest(TestCase):
 
     def test_encode(self):
         data = {"values": [1, 2]}
-        expected = '''{
-    "values": [
-        1,
-        2
-    ]
-}'''
-        self.assertEqual(expected, json_format.encode(data))
+        expected = '{"values": [1, 2]}'
+        self.assertEqual(expected, json_format.encode(data, indent=None))
 
     def test_decode(self):
         text = '{"values":[1,2],"other_value":2}'

@@ -13,10 +13,8 @@ class XmlFormatTest(TestCase):
 
     def test_encode_with_dict(self):
         data = {"value": {"attr": "name"}}
-        expected = '''<value>
-	<attr>name</attr>
-</value>'''
-        self.assertEqual(expected, xml_format.encode(data))
+        expected = '<value><attr>name</attr></value>'
+        self.assertEqual(expected, xml_format.encode(data, pretty=False))
 
     def test_encode_with_list(self):
         data = {"value": [1, 2]}
@@ -24,13 +22,7 @@ class XmlFormatTest(TestCase):
         self.assertEqual(expected, xml_format.encode(data))
 
     def test_decode(self):
-        text = '''<?xml version="1.0"?>
-        <root>
-            <value>1</value>
-            <value>2</value>
-            <other_value>2</other_value>
-        </root>
-        '''
+        text = '<root><value>1</value><value>2</value><other_value>2</other_value></root>'
         expected = OrderedDict({'value': ['1', '2'], 'other_value': '2'})
         self.assertEqual(expected, xml_format.decode(text))
 
@@ -40,6 +32,6 @@ class XmlFormatTest(TestCase):
         self.assertEqual(expected, xml_format.decode(text))
 
     def test_decode_with_single_dict(self):
-        text = '<value><attr>name</attr></value>'
+        text = '<root><attr>name</attr></root>'
         expected = OrderedDict({"attr": "name"})
         self.assertEqual(expected, xml_format.decode(text))
