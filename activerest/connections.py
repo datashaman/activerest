@@ -1,5 +1,5 @@
 import logging
-import activerest.formats.json
+import activerest.formats.json_format
 import requests
 
 from furl import furl
@@ -32,7 +32,7 @@ class Connection(object):
 
     requests = []
 
-    def __init__(self, site, format=activerest.formats.json):
+    def __init__(self, site, format=activerest.formats.json_format):
         self.site = site
         self.format = format
 

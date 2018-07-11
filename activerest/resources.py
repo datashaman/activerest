@@ -7,7 +7,7 @@ from future.standard_library import install_aliases
 from future.utils import viewitems
 install_aliases()
 
-import activerest.formats.json
+import activerest.formats.json_format
 import requests
 import inflection
 
@@ -44,7 +44,7 @@ META_ATTRIBUTES = {
         'default': lambda cls: inflection.dasherize(inflection.underscore(cls.__name__))
     },
     'format': {
-        'default': lambda cls: activerest.formats.json
+        'default': lambda cls: activerest.formats.json_format
     },
     'include_format_in_path': {
         'default': lambda cls: True
