@@ -448,3 +448,9 @@ class ResourcesTest(TestCase):
 
         with self.assertRaises(HTTPError):
             Todo.find()
+
+    def test_query_string_with_none(self, m):
+        self.assertEqual('', Todo.query_string())
+
+    def test_query_string_with_params(self, m):
+        self.assertEqual('?attr=name', Todo.query_string(attr="name"))
