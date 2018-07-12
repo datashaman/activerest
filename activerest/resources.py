@@ -48,7 +48,7 @@ META_ATTRIBUTES = {
         'default': lambda cls: activerest.formats.json_format
     },
     'include_format_in_path': {
-        'default': lambda cls: True
+        'default': lambda cls: False,
     },
     'open_timeout': {
         'reset_connection': True,
@@ -294,9 +294,20 @@ class Resource(with_metaclass(MetaResource, object)):
     @classmethod
     def collection_path(cls, **params):
         """Path to the collection API endpoint."""
-        return '/%s%s' % (cls.collection_name, cls.query_string(**params))
+        return '/%s%s%s' % (cls.collection_name,
+                            cls.format_extension(),
+                            cls.query_string(**params))
 
     @classmethod
     def element_path(cls, identifier, **params):
         """Path to the element API endpoint."""
-        return '/%s/%s%s' % (cls.collection_name, identifier, cls.query_string(**params))
+        return '/%s/%s%s%s' % (cls.collection_name,
+                               identifier,
+                               cls.format_extension(),
+                               cls.query_string(**params))
+
+    @classmethod
+    def format_extension(cls):
+        if cls.include_format_in_path:
+            return '.%s' % cls.format.extension()
+        return ''

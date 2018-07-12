@@ -71,6 +71,12 @@ class TodoWithoutSite(Resource):
     pass
 
 
+class TodoWithIncludeFormatInPath(Resource):
+    site = 'http://example.com'
+    element_name = 'todo'
+    include_format_in_path = True
+
+
 @requests_mock.Mocker()
 class ResourcesTest(TestCase):
     def assert_todo_list(self, expected, actual):
@@ -454,3 +460,13 @@ class ResourcesTest(TestCase):
 
     def test_query_string_with_params(self, m):
         self.assertEqual('?attr=name', Todo.query_string(attr="name"))
+
+    def test_include_format_in_path(self, m):
+        m.register_uri(
+            'GET',
+            'http://example.com/todos.json',
+            json=[],
+            status_code=200
+        )
+
+        TodoWithIncludeFormatInPath.find()
