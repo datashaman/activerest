@@ -1,4 +1,3 @@
-import logging
 import activerest.formats.json_format
 import requests
 
@@ -161,6 +160,10 @@ class Connection(object):
             return self._default_header
         self._default_header = {}
         return self._default_header
+
+    @default_header.setter
+    def default_header(self, default_header):
+        self._default_header = default_header
 
     def build_request_headers(self, headers, method):
         result = {}
