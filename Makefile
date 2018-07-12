@@ -9,8 +9,8 @@ coveralls:
 	coveralls
 
 clean:
-	rm -rf activerest/__pycache__/
 	find . -name '*.pyc' -delete
+	find . -name '__pycache__' -delete
 
 develop:
 	python setup.py -q develop

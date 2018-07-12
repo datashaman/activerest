@@ -5,6 +5,7 @@ from __future__ import absolute_import
 
 from future.standard_library import install_aliases
 from future.utils import viewitems
+
 install_aliases()
 
 import activerest.formats.json_format
